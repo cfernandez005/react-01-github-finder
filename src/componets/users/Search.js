@@ -1,66 +1,63 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState, useContext } from 'react';
+import GithubContext from '../../context/github/githubContext';
+import AlertContext from '../../context/alert/alertContext';
 
-export class Search extends Component {
-  state = {
-    text: '',
-  };
-
-  static propTypes = {
-    searchUsers: PropTypes.func.isRequired,
-    clearUsers: PropTypes.func.isRequired,
-    showClear: PropTypes.bool.isRequired,
-    setAlert: PropTypes.func.isRequired,
-  };
+const Search = () => {
+  //Hook brought in GithubContext
+  //"useContext" hook needs to be brougt in from import React
+  const githubContext = useContext(GithubContext);
+  const alertContext = useContext(AlertContext);
+  const [text, setText] = useState('');
 
   //Arrow function to change the state of text
-  onChange = (e) => {
-    //Basic method for a single input variable
-    //this.setState({ text: e.target.value });
-    //Key based mehtod for multiple input variables; email, name, etc.
-    this.setState({ [e.target.name]: e.target.value });
+  const onChange = (e) => {
+    setText(e.target.value);
   };
 
-  onSubmit = (e) => {
+  const onSubmit = (e) => {
     e.preventDefault();
-    if (this.state.text === '')
-      this.props.setAlert('Please enter search input', 'light');
-    else {
+    if (text === '') {
+      alertContext.setAlert('Please enter search input', 'light');
+    } else if (text.trim() === '') {
+      alertContext.setAlert(
+        'General list of github users since input was not received',
+        'light'
+      );
+      githubContext.defaultUsers();
+    } else {
       //Needed to pass search input over to App.js
-      this.props.searchUsers(this.state.text);
+      githubContext.searchUsers(text);
       //clears forms afterwards
-      this.setState({ text: '' });
+      setText('');
     }
   };
 
-  render() {
-    //Function now uses Destructuring to pass variables within Function parameter
-    const { showClear, clearUsers } = this.props;
-
-    return (
-      <div>
-        <form onSubmit={this.onSubmit} className='form'>
-          <input
-            type='text'
-            name='text'
-            placeholder='Search Users...'
-            value={this.state.text}
-            onChange={this.onChange}
-          />
-          <input
-            type='submit'
-            value='Search'
-            className='btn btn-dark btn-block'
-          />
-        </form>
-        {showClear && (
-          <button className='btn.btn-light btn-block' onClick={clearUsers}>
-            Clear
-          </button>
-        )}
-      </div>
-    );
-  }
-}
+  return (
+    <div>
+      <form onSubmit={onSubmit} className='form'>
+        <input
+          type='text'
+          name='text'
+          placeholder='Search Users...'
+          value={text}
+          onChange={onChange}
+        />
+        <input
+          type='submit'
+          value='Search'
+          className='btn btn-dark btn-block'
+        />
+      </form>
+      {githubContext.users.length > 0 && (
+        <button
+          className='btn.btn-light btn-block'
+          onClick={githubContext.clearUsers}
+        >
+          Clear
+        </button>
+      )}
+    </div>
+  );
+};
 
 export default Search;
